@@ -1,0 +1,165 @@
+---
+title: "HW5"
+author: "Alexandra Pasternakova"
+date: " created 4 October 2021, updated `r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+      toc: true
+      toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+This exercise is based on the dataset provided by [OurWorldInData project](https://ourworldindata.org/homicides) based at the Oxford University.
+
+## The long-term trend in Homicides in Western Europe
+
+Understanding how homicide rates have changed prior to the modern era requires the help of historians and archivists. Manuel Eisner, a criminology professor at the University of Cambridge, and his colleagues published the Historical Violence Database \href{https://cjrc.osu.edu/research/interdisciplinary/hvd}: a compilation of data on long-term trends in homicide rates, in addition to qualitative information such as the cause of death, perpetrator and victim. This database is limited to countries with relatively complete historical records on violence and crime – mainly Western Europe and the US.
+
+Starting in the second half of the nineteenth century, these European regions have consistent police records of those accused of murder or manslaughter and annual counts of homicide victims. To go back further in time, reaching as far back as the thirteenth century, Eisner collected estimates (from historical records of coroner reports, court trials, and the police) of homicide rates made in over ninety publications by scholars.5
+
+In the chart shown here we see long-run homicide rates for the five European regions.
+
+Homicide rates – measured as the number of homicides per 100,000 individuals – up to 1990 are sourced from Eisner’s (2003) publication and the Historical Violence Database. These estimates have been combined, from 1990 onwards, with homicide rates from the Global Burden of Disease study.6
+
+In the 1300s, homicide rates in Western Europe ranged from 23 to 56 homicides per 100,000 individuals, comparable to the current rates in Latin America. Homicide rates then fell dramatically in all five regions from the 1300s to 1800s. The magnitude of this decline was similar across countries: homicide rates fell between 78 and 98%.
+
+Homicide rates in Europe today are much lower than in the past. England, Germany, Switzerland, and Italy reached their lowest levels in the 2000s; while the Netherlands, Belgium, and Scandinavia reached their minimums in the mid to late 1900s.
+
+```{r, echo=FALSE, results = FALSE, message = FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+## Load the available data from ourworldindata.org
+
+You should always interrogate the source of your data. Who compiled it, from where, what is missing, how representative the data are? Check the data/Metadata document to learn about the data provenance.
+
+```{r Loading data}
+Western_Europe <- read_csv("data/homicide-rates-across-western-europe.csv")
+```
+
+## Inspect the data
+
+How clean and analysis-ready is the dataset? Do you understand what the column names represent? What is the difference between rate and homicide number?
+
+```{r Inspecting data}
+head(Western_Europe)
+```
+
+Note that the `echo = FALSE` parameter can be added to the code chunk to prevent printing of the R code that generated the plot.
+
+Now, that you have looked at what the data looks like and what it represents, let's see what big picture it contains.
+
+## Let's see what the long-term trend is
+```{r Figure 1}
+ggplot(data = Western_Europe) + 
+  geom_point(mapping = aes(x = Year, 
+                           y = Western_Europe$`Homicide rate in Europe over long-term (per 100,000) (homicides per 100,000 people)`, 
+                           color = Entity)) +
+  labs(x = "Year",
+       y = "Number of Homicides per 100,000 people",
+       title = "Homicide rate in Europe from 1300-2000")
+```
+Alright, the homicide rates are all descending over time. What a comfort. But the viz is not super clear. Let's check the rates for individual countries.
+
+## Let's uncouple for easier view of individual countries
+
+```{r Figure 2}
+ggplot(data = Western_Europe) + 
+  geom_point(mapping = aes(x = Year, 
+                           y = Western_Europe$`Homicide rate in Europe over long-term (per 100,000) (homicides per 100,000 people)`, 
+                           color = Entity)) +
+  facet_wrap(~ Entity, nrow = 3) +
+  labs(x = "Year",
+       y = "Homicides per 100,000",
+       title = "Homicide rate in Western Europe from 1300-2000")
+
+```
+
+
+**Your Tasks:**
+
+## 1) Renaming columns
+
+The column name Western_Europe$`Homicide rate in Europe over long-term (per 100,000) is not very easy to work with. Relabel it to 'homicides' for easier use in the ggplots.
+
+```{r Renaming columns}
+names(Western_Europe)[names(Western_Europe) == 'Homicide rate in Europe over long-term (per 100,000) (homicides per 100,000 people)'] <- 'Homicides'
+#I use function names() in order to change just one specified column name
+#Now we can inspect the data and see if it worked
+
+head(Western_Europe)
+```
+
+## 2) Plot options
+The facet is great, but geom_point(scatterplot) is not the best choice for showing long-term data. Can you create other type of visualisation for a long-term trend? 
+
+```{r Plotting options}
+#it seems to me it would be easier to read if we use geom_line instead, makes the trend more obvious
+
+ggplot(data = Western_Europe) + 
+  geom_line(mapping = aes(x = Year, 
+                           y = Western_Europe$Homicides, 
+                           color = Entity)) +
+  facet_wrap(~ Entity, nrow = 3) +
+  labs(x = "Year",
+       y = "Homicides per 100,000",
+       title = "Homicide rate in Western Europe from 1300-2000")
+#same plot as before but with geom_line
+```
+
+## 3) Facet layout
+Can you change the facet layout to two columns and three rows so that the trends are more visible? 
+
+```{r Changing facet layout}
+#The facet is already 2 columns, 3 rows
+#I can make it 3 columns and 2 rows by rewriting "nrow" and make it "nrow = 2" 
+#... but I am not sure if that is what I was meant to do
+
+ggplot(data = Western_Europe) + 
+  geom_line(mapping = aes(x = Year, 
+                           y = Western_Europe$Homicides, 
+                           color = Entity)) +
+  facet_wrap(~ Entity, nrow = 2) +
+  labs(x = "Year",
+       y = "Homicides per 100,000",
+       title = "Homicide rate in Western Europe from 1300-2000")
+
+```
+
+## 4) Altering legend
+Move the legend from the current position on the side to below the facets, and label it "Country" instead of "Entity".
+
+```{r Altering legend}
+#we can further specify the legend in the plot by using properties of labs() function
+
+ggplot(data = Western_Europe) + 
+  geom_line(mapping = aes(x = Year, 
+                           y = Western_Europe$Homicides, 
+                           color = Entity)) +
+  facet_wrap(~ Entity, nrow = 2) +
+  labs(x = "Year",
+       y = "Homicides per 100,000",
+       title = "Homicide rate in Western Europe from 1300-2000",
+       col = "Country") +
+  #by adding "col = "Country" we change the legend title/category name
+  theme(legend.position="bottom") 
+  #specifies legend position to be bottom
+```
+
+## 5) Document structure
+Add a floating table of contents to your Rmarkdown document, provide informative chunk-names to all your R chunks, and automatically generate a timestamp to show when the document was last updated. 
+
+```{r Finishing touches}
+# title: "HW5"
+# author: "Alexandra Pasternakova"
+# date: "`r format(Sys.time(), '%d %B, %Y')`"
+# output: html_document:
+#       toc: true
+#       toc_float: true
+
+#in order to add table of contents I added "toc" and "toc_float" to make it float in the document
+#the code in "date" will make it update itself when the document is knitted in a specified format (dd/mm/yyyy, d/m/yy, etc.)
+
+```

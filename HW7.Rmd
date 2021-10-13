@@ -1,0 +1,117 @@
+---
+title: "Practicing functions with Gapminder"
+author: "Alexandra Pasternakova"
+date: " created 13 October 2021, updated `r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+      toc: true
+      toc_float: true
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## DESCRIPTION
+
+Use the gapminder dataset from Week 05 to produce solutions to the three tasks below. Post the .R script or .Rmd and .html in your au##### github repository and link it here:
+
+```{r, echo=FALSE, results = FALSE, message = FALSE, warning=FALSE}
+library(gapminder)
+```
+
+
+```{r Inspecting data}
+head(gapminder)
+
+```
+
+**Your Tasks:**
+
+## 1) GDP
+Define a defensive function that calculates the Gross Domestic Product of a nation from the data available in the gapminder dataset. You can use the population and GDPpercapita columns for it. Using that function, calculate the GDP of Denmark in the following years: 1967, 1977, 1987, 1997, 2007, and 2017.
+
+```{r Calculating GDP}
+#we define the function calcGDP by assigning it to the output of function()
+#we set year and country to NULL to ensure there is no prior value from some code we ran before, it will stay NULL until we specify otherwise
+ #the function now subsets the provided data by year if the year argument isn’t empty, then subsets the result by  country if the country argument isn’t empty
+calcGDP <- function(dat, year=NULL, country=NULL) {
+  if(!is.null(year)) { 
+    dat <- dat[dat$year %in% year, ]
+  }
+  
+  if (!is.null(country)) {
+    dat <- dat[dat$country %in% country,]
+  }
+  
+  gdp <- dat$pop * dat$gdpPercap #calculates GDP
+
+  new <- cbind(dat, gdp=gdp) #adds GDP as a column
+  return(new)
+}
+
+#calls the function, we specify data, years we are interested in and the country name
+calcGDP(gapminder, year=c(1967, 1977,1987,1997,2007,2017), country="Denmark")
+#we only see 5 rows = 5 years, because the gapminder data doesn't include year 2017 as we can see here
+unique(gapminder$year)
+#I tried many times to somehow make it type back a message signifying that some data (2017) is missing but can`t seem to make it work properly
+#if we only use the function on the missing year it will return nothing because the values are NULL so it does serve the purpose of not creating "wrong" data
+calcGDP(gapminder, year=2017, country="Denmark")
+
+```
+
+## 2) Loop
+Write a script that loops over each country in the gapminder dataset, tests whether the country starts with a ‘B’ , and prints out whether the life expectancy is smaller than 50, between 50 and 70, or greater than 70. (Hint: remember the grepl functions, and review the Control Flow tutorial)
+
+```{r Looping over countries}
+#Firstly I define the lower and upper threshold so we can later define our conditions
+lowerThreshold <- 50 
+upperThreshold <- 70
+#I create a vector containing all names of countries starting with B using grep function 
+#grep searches for matches to argument pattern within each element of a character vector - in our case the starting letter B, we let the function to sift through all the country names using unique function 
+candidateCountries <- grep("^B", unique(gapminder$country), value = TRUE)
+#we create loop with 3 different conditions, it is either "less than", "between" or "greater than", we specify what to print if the condition is met
+for ( iCountry in candidateCountries) {
+    tmp <- mean(subset(gapminder, country==iCountry)$lifeExp) #calculates the mean life expectancy for the country currently in the loop
+
+    if(tmp < lowerThreshold) {
+        cat("Average Life Expectancy in", iCountry, "is less than", lowerThreshold, "\n") #prints the text with the country currently in the loop, same logic follows
+    } 
+    else if(tmp > lowerThreshold && tmp < upperThreshold) {
+        cat("Average Life Expectancy in", iCountry, "is between", lowerThreshold, "and", upperThreshold, "\n")
+    } 
+    else {
+        cat("Average Life Expectancy in", iCountry, "is greater than", upperThreshold, "\n")
+    }
+    rm(tmp)
+}
+
+```
+
+## 3) Challenge loop
+Challenge/Optional: Write a script that loops over each country in the gapminder dataset, tests whether the country starts with a ‘M’ and graphs life expectancy against time (using plot() function) as a line graph if the mean life expectancy is under 50 years.
+
+```{r Challenging the programming gods}
+thresholdValue <- 50 #defines our threshold
+candidateCountries <- grep("^M", unique(gapminder$country), value = TRUE) #find all countries starting with M 
+#similar to previous loop, only if the mean life expectancy is smaller than threshold value, the program plots it against time
+for (iCountry in candidateCountries) {
+    tmp <- mean(subset(gapminder, country==iCountry)$lifeExp)
+
+    if (tmp < thresholdValue) {
+        cat("Average Life Expectancy in", iCountry, "is less than", thresholdValue, "plotting life expectancy graph... \n")
+
+        with(subset(gapminder, country == iCountry),
+                plot(year, lifeExp,
+                     type = "o",
+                     main = paste("Life Expectancy in", iCountry, "over time"),
+                     ylab = "Life Expectancy",
+                     xlab = "Year"
+                     ) #end plot
+             ) #end with
+    } #end if
+    rm(tmp)
+} #end loop
+
+```
+
+

@@ -1,0 +1,67 @@
+---
+title: "HW4"
+output: pdf_document
+---
+
+```{r, include=FALSE} 
+options(tinytex.verbose = TRUE)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+GitHub link: https://github.com/Digital-Methods-HASS/AU580227_Pasternakova_Alexandra.git
+
+1) Use R to figure out how many elements in the vector below are greater than 2.
+
+rooms <- c(1, 2, 1, 3, 1, NA, 3, 1, 3, 2, 1, NA, 1, 8, 3, 1, 4, NA, 1, 3, 1, 2, 1, 7, 1, NA)
+
+```{r}
+
+rooms <- c(1, 2, 1, 3, 1, NA, 3, 1, 3, 2, 1, NA, 1, 8, 3, 1, 4, NA, 1, 3, 1, 2, 1, 7, 1, NA)
+#creates vector
+
+rooms_filtered <- rooms[!is.na(rooms)]
+#creates new vector taking values of "rooms" without NA
+(rooms_filtered)
+#prints elements of the vector on the console
+
+rooms_filtered <- rooms_filtered[rooms_filtered > 2]
+#filters out all values greater than 2
+(rooms_filtered)
+#prints values
+
+length(rooms_filtered)
+#counts how many elements there is
+#answer is 8
+
+
+```
+
+2) What type of data is in the 'rooms' vector?
+
+```{r}
+
+class(rooms)
+#tells us the tupe of data (numeric, logical, string...)
+#the data is numeric
+
+str(rooms)
+#another option which also includes length and sample of data
+
+```
+
+3) What is the result of running the median() function on the above 'rooms' vector?
+
+
+```{r}
+
+median(rooms)
+#the result is unknown due to our data including NA vaues
+#we could use the vector without NA values to count the median
+
+median(rooms , na.rm = TRUE)
+#by including na.rm we tell the program to remove NA values before starting computation
+#result for median is 1.5
+
+
+```

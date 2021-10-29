@@ -80,3 +80,18 @@ ggplot(data = longer_data, ) +
 #The overall tendency seems to be increasing number of women, however, further analysis would have to be done of course
 ```
 
+```{r}
+#creating data set with mean values for each year
+mean_data <- group_by(longer_data, Year) %>%
+             summarise(Percentage = mean(Percentage, na.rm = TRUE))
+
+#plotting the means
+ggplot(data = mean_data, ) + 
+  geom_line(mapping = aes(x = Year, 
+                           y = Percentage,
+                          group = 1)) +
+ labs(x = "Year",
+       y = "Percentage of women holding national seat",
+       title = "Women in national parliaments (mean)")
+
+```

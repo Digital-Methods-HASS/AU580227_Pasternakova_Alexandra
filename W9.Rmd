@@ -1,0 +1,82 @@
+---
+title: 'W9: Web Scraping'
+author: "Alexandra Pasternakova"
+date: " created 26 October 2021, updated `r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+      toc: true
+      toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Task
+2) use the rvest library to scrape data of your interest (football statistics in Wikipedia?, gender representatives in different governments? global population by country in 
+
+```{r Libraries, echo=FALSE, results = FALSE, message = FALSE, warning=FALSE}
+library(rvest)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(janitor)
+library(ggplot2)
+library(tidyverse)
+```
+
+## Loading data
+```{r Uploading data, message=FALSE}
+
+url <- "https://en.wikipedia.org/wiki/European_countries_by_percentage_of_women_in_national_parliaments"
+# scrape the website
+
+dat <- read_html(url) %>% 
+	html_element(".wikitable") %>% 
+	html_table()  #making data frame
+
+
+```
+## Cleaning data
+```{r Cleaning data}
+#I need to take all columns of years (2010, 2011,...) and create just one variable Year that has assigned the corresponding value of percentage of women in the parliament that year
+longer_data <- pivot_longer(dat, cols = c("2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017"), names_to = "Year", values_to = "Percentage")
+
+#we can see the change, data frame is much more tidy and now we can work with it
+print(longer_data)
+
+#removing NAs
+longer_data <- filter(longer_data, !is.na(longer_data$Percentage))
+
+ 
+```
+## Plots
+
+```{r Plotting}
+#a plot showing the trends in different countries, it would seem that there is increasing number of weomen in the parliaments, however, not in all countries
+ggplot(data = longer_data, ) + 
+  geom_line(mapping = aes(x = Year, 
+                           y = Percentage,
+                          color = Country,
+                          group = Country)) +
+  labs(x = "Year",
+       y = "Percentage of women holding national seat",
+       title = "Women in national parliaments")
+
+```
+
+```{r Plot 2, fig.height=10, fig.width=20}
+#a facet wrap graph for each country separately
+ggplot(data = longer_data, ) + 
+  geom_line(mapping = aes(x = Year, 
+                           y = Percentage, 
+                           color = Country, 
+                           group = Country)) +
+ facet_wrap(~ Country, nrow = 5 ) +
+ labs(x = "Year",
+       y = "Percentage of women holding national seat",
+       title = "Women in national parliaments")
+
+#The overall tendency seems to be increasing number of women, however, further analysis would have to be done of course
+```
+

@@ -1,0 +1,398 @@
+---
+title: "Data exploration and analysis"
+author: "Alexandra Pasternakova"
+date: "10/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+```
+
+```{r Load packadges and data}
+library(rmarkdown)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(ggpubr)
+library(car)
+
+#load data
+vaccination <- read_csv("C:/Users/alexp/Documents/School/Cult.data.analysis/final project/vaccinations.csv")
+trust_index <- read_csv("C:/Users/alexp/Documents/School/Cult.data.analysis/final project/DP_LIVE_25102021135525598.csv")
+trust_vaccine <- read.csv("C:/Users/alexp/Documents/School/Cult.data.analysis/final project/safety_doubts.csv")
+covid_threat <- read.csv("C:/Users/alexp/Documents/School/Cult.data.analysis/final project/belief_covid_exagerrated.csv")
+median_hdi_gdp <- read.csv("C:/Users/alexp/Documents/School/Cult.data.analysis/final project/data_provisional/owid-covid-data.csv")
+
+```
+
+```{r Cleaning up Vaccinations data set}
+
+locations <- unique(vaccination$location) 
+dates <- unique(vaccination$date) 
+total_vaccinations <- unique(vaccination$total_vaccinations)
+
+dates <- data.frame(
+  dates = vaccination$date)
+
+
+dates %>% 
+  # transform to date format 
+  mutate(dates = ymd(dates)) %>% 
+  # find min and max dates
+  summarise(min = min(dates),
+            max = max(dates))
+
+
+total_vaccinated <- vaccination[, c("location", "iso_code", "date", "people_vaccinated_per_hundred")]
+#removing extra columns
+
+
+total_vaccinated <- total_vaccinated %>% filter(!is.na(people_vaccinated_per_hundred))
+#removing NAs
+total_vaccinated$date <- as.Date(as.character(total_vaccinated$date))
+#changing date to date
+class(total_vaccinated$date)
+str(total_vaccinated)
+
+total_vaccinated <- total_vaccinated %>% group_by(location) %>% filter(date == max(date))
+#filters out all rows except for max date for each location
+
+European_countries <- c("Albania",
+                        "Andorra",
+                        "Armenia",
+                        "Austria",
+                        "Azerbaijan",
+                        "Belarus",
+                        "Belgium",
+"Bosnia and Herzegovina",
+"Bulgaria",
+"Croatia",
+"Cyprus",
+"Czechia",
+"Denmark",
+"Estonia",
+"Finland",
+"France",
+"Georgia",
+"Germany",
+"Greece",
+"Hungary",
+"Iceland",
+"Ireland",
+"Italy",
+"Kazakhstan",
+"Kosovo",
+"Latvia",
+"Liechtenstein",
+"Lithuania",
+"Luxembourg",
+"Malta",
+"Moldova",
+"Monaco",
+"Montenegro",
+"Netherlands",
+"North Macedonia",
+"Norway",
+"Poland",
+"Portugal",
+"Romania",
+"Russia",
+"San Marino",
+"Serbia",
+"Slovakia",
+"Slovenia",
+"Spain",
+"Sweden",
+"Switzerland",
+"Turkey",
+"Ukraine",
+"United Kingdom",
+"Vatican City")
+#list of European countries
+
+
+Europe <- total_vaccinated[total_vaccinated$location %in% European_countries, ]
+#filters data set to only be first specified European countries from our list
+  
+
+```
+
+
+
+### TRUST INDEX ###
+
+```{r Trust index data set}
+unique(trust_index$LOCATION) #getting all iso_codes = locations
+unique(trust_index$TIME) #writes all unique years
+
+trust <- trust_index[, c("LOCATION", "TIME", "Value")] #removing extra columns
+
+max(trust$TIME)
+
+trust <- trust %>% group_by(LOCATION) %>% filter(TIME == max(TIME))
+#filters all rows but the latest year (max year 2020) for most recent index measure
+
+vacc_iso_codes <- unique(Europe$iso_code)
+#extracting unique codes from previous data set of vaccinations into list
+
+trust_Europe <- trust[trust$LOCATION %in% vacc_iso_codes, ]
+#extracts from Trust index data set only values belonging to iso codes from European countries  
+trust_Europe <- trust_Europe %>% 
+  rename(
+    iso_code = LOCATION,
+    trust_value = Value
+    )
+#renames columns
+
+trust_Europe <- trust_Europe[, c("iso_code", "trust_value")]
+#extracts only columns we need
+
+
+trust_Europe <- merge(Europe, trust_Europe, by.x = "iso_code", 
+             by.y = "iso_code", all.x = TRUE, all.y = FALSE)
+#merges data sets by iso codes
+
+```
+
+### TRUST IN VACCINE DATA #####
+
+```{r Trust/distrust in vaccine data set}
+
+class(trust_vaccine$Country)
+#checking class, it's factor so we must change it
+
+trust_vaccine_char <- trust_vaccine                                              # Duplicate data
+trust_vaccine_char$Country <- as.character(trust_vaccine_char$Country) 
+#change to character
+
+class(trust_vaccine_char$Country)
+#confirming it is character now
+
+trust_vaccine_char$Country <- gsub("\\*","",paste(trust_vaccine_char$Country))
+trust_vaccine_char
+#removing "*" from Country names
+
+trust_vaccine_char <- trust_vaccine_char[-18,]
+trust_vaccine_char
+#remove last row because it's total and we dont need it 
+
+trust_vaccine_char <- trust_vaccine_char %>% 
+  rename(
+    location = Country,
+    percent_dont_trust = Total
+    )
+#renames columns to be the same as in previous data sets so we can combine them
+
+trust_vaccine_char <- trust_vaccine_char[, c("location", "percent_dont_trust")]
+#removing unnecessary column
+
+factors_Europe <- merge(trust_Europe, trust_vaccine_char, by.x = "location", 
+             by.y = "location", all.x = TRUE, all.y = FALSE)
+#merge data sets by location column
+
+```
+
+### PERCEIVED THREAT OF COVID DATA###
+
+```{r Perceived threat of covid data set}
+#I proceeded with the same steps as in "Trust in vaccine data because they are essentially the same
+
+class(covid_threat$Country) #checking class, it is factor
+
+covid_threat_char <- covid_threat                                              # Duplicate data
+covid_threat_char$Country <- as.character(covid_threat_char$Country) 
+#changing to character
+
+class(covid_threat_char$Country)
+#confirms it is now character
+
+covid_threat_char$Country <- gsub("\\*","",paste(covid_threat_char$Country))
+covid_threat_char
+#removing the "*" from Country names
+
+covid_threat_char <- covid_threat_char[-18,]
+covid_threat_char
+#remove last row
+
+covid_threat_char <- covid_threat_char %>% 
+  rename(
+    location = Country,
+    percent_think_exagerrated = Total
+    )
+#renames columns
+
+covid_threat_char <- covid_threat_char[, c("location", "percent_think_exagerrated")]
+#removing unnecessary column
+
+factors_Europe <- merge(factors_Europe, covid_threat_char, by.x = "location", 
+             by.y = "location", all.x = TRUE, all.y = FALSE)
+#merge data sets
+
+```
+
+### DATA HUMAN DEVELOPMENT INDEX, GDP, MEDIAN AGE ###
+
+```{r Data for human development index, GDP and median age}
+
+str(median_hdi_gdp)
+#checking the data set 
+
+locations <- unique(median_hdi_gdp$location)
+dates <- unique(median_hdi_gdp$date)
+
+dates <- data.frame(
+  dates = median_hdi_gdp$date)
+#extracting dates
+
+dates %>% 
+  # transform to date format with lubridate
+  mutate(dates = ymd(dates)) %>% 
+  # find min and max
+  summarise(min = min(dates),
+            max = max(dates))
+
+
+ult_median_hdi_gdp <- median_hdi_gdp[, c("location", "date", "median_age", "gdp_per_capita", "human_development_index")]
+#extract necessary columns
+
+ult_median_hdi_gdp$date <- as.Date(as.character(ult_median_hdi_gdp$date))
+#converting date to date
+
+class(ult_median_hdi_gdp$date)
+str(ult_median_hdi_gdp)
+
+ult_median_hdi_gdp <- ult_median_hdi_gdp %>% group_by(location) %>% filter(date == max(date))
+#we take only data from the latest date
+
+Europe_median_hdi_gdp <- ult_median_hdi_gdp[ult_median_hdi_gdp$location %in% European_countries, ]
+#we filter the data to only be European countries from the list we made before
+
+Europe_median_hdi_gdp <- Europe_median_hdi_gdp[, c("location", "median_age", "gdp_per_capita", "human_development_index")]
+#removing date column
+
+factors_Europe <- merge(factors_Europe, Europe_median_hdi_gdp, by.x = "location", 
+             by.y = "location", all.x = TRUE, all.y = FALSE)
+#merge data sets into final data set
+
+
+```
+
+
+### ANALYSIS ###
+
+```{r Trust in government graph and correlation test}
+
+ggplot(data = factors_Europe) +
+  geom_point(mapping = aes(x = trust_value,
+                           y = people_vaccinated_per_hundred,
+                           color = iso_code)) +
+  labs(x = "Trust index",
+       y = "Vaccinated people per hundred",
+       title = "Plot 1")
+
+
+
+# cor.test(x, y, method=c("pearson", "kendall", "spearman"))
+
+correlation_test1 <- cor.test(factors_Europe$people_vaccinated_per_hundred, factors_Europe$trust_value,  method = "pearson", use = "complete.obs")
+
+correlation_test1
+#the result suggests positive correlation, p value is not significant
+#p-value is higher than 0.05 (typically ≤ 0.05) it is not statistically significant
+# sample estimates is the correlation coefficient - Cor = 0.3416231).
+
+ggscatter(factors_Europe, x = "trust_value", y = "people_vaccinated_per_hundred",
+          add = "reg.line", conf.int = TRUE,
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Trust index", ylab = "People vaccinated (per hundred)")
+
+
+```
+
+
+
+```{r Mdian age cor test}
+
+ggplot(data = factors_Europe) +
+  geom_point(mapping = aes(x = median_age,
+                           y = people_vaccinated_per_hundred,
+                           color = iso_code)) +
+  labs(x = "Median age",
+       y = "Vaccinated people per hundred",
+       title = "Plot 2")
+
+
+
+# cor.test(x, y, method=c("pearson", "kendall", "spearman"))
+
+correlation_test2 <- cor.test(factors_Europe$people_vaccinated_per_hundred, factors_Europe$median_age,  method = "pearson", use = "complete.obs")
+
+correlation_test2
+#the result suggests positive correlation, p value is significant
+#p-value less than 0.05 (typically ≤ 0.05) is statistically significant
+# sample estimates is the correlation coefficient - Cor = 0.3431216).
+
+ggscatter(factors_Europe, x = "median_age", y = "people_vaccinated_per_hundred",
+          add = "reg.line", conf.int = TRUE,
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Median age", ylab = "People vaccinated (per hundred)")
+
+```
+
+```{r}
+ggplot(data = factors_Europe) +
+  geom_point(mapping = aes(x = gdp_per_capita,
+                           y = people_vaccinated_per_hundred,
+                           color = iso_code)) +
+  labs(x = "GDP per capita",
+       y = "Vaccinated people per hundred",
+       title = "Plot 3")
+
+
+
+# cor.test(x, y, method=c("pearson", "kendall", "spearman"))
+
+correlation_test3 <- cor.test(factors_Europe$people_vaccinated_per_hundred, factors_Europe$gdp_per_capita,  method = "pearson", use = "complete.obs")
+
+correlation_test3
+#the result suggests positive correlation, p value is significant p-value = 3.649e-08
+#p-value is less than 0.05 (typically ≤ 0.05) there is a significant linear correlation 
+# sample estimates is the correlation coefficient - Cor = 0.7027868).
+
+ggscatter(factors_Europe, x = "gdp_per_capita", y = "people_vaccinated_per_hundred",
+          add = "reg.line", conf.int = TRUE,
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "GDP per capita", ylab = "People vaccinated (per hundred)")
+
+
+```
+
+```{r}
+
+ggplot(data = factors_Europe) +
+  geom_point(mapping = aes(x = human_development_index,
+                           y = people_vaccinated_per_hundred,
+                           color = iso_code)) +
+  labs(x = "human development index",
+       y = "Vaccinated people per hundred",
+       title = "Plot 3")
+
+
+
+# cor.test(x, y, method=c("pearson", "kendall", "spearman"))
+
+correlation_test4 <- cor.test(factors_Europe$people_vaccinated_per_hundred, factors_Europe$human_development_index,  method = "pearson", use = "complete.obs")
+
+correlation_test4
+#the result suggests positive correlation, p value is significant
+#p-value less than 0.05 (typically ≤ 0.05) is statistically significant
+# sample estimates is the correlation coefficient - Cor = 0.8259597.
+
+ggscatter(factors_Europe, x = "human_development_index", y = "people_vaccinated_per_hundred",
+          add = "reg.line", conf.int = TRUE,
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "human development index", ylab = "People vaccinated (per hundred)")
+
+```

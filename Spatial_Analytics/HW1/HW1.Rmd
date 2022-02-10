@@ -1,0 +1,55 @@
+---
+title: "HW1"
+author: "Alexandra Pasternakova"
+date: "1/4/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#1.Answer: Describe a problem or question in your field that lends itself to spatial analysis.
+
+- well, perhaps the spatial mapping of the neuron structure in the brain, the organisation of synaptic inputs and how neurons expand etc.
+
+#2.Answer: List data layers that you think are necessary to answer your question/solve your problem. Describe examples of two or three of your listed layers and see if you can find them on the internet.
+
+- I think my example was not the best for this question however, on  a clean cut through perhaps one layer would be the electric activity mapping of the neurons, another one could be layer of bloodflow as areas during activation tend to have increased bloodflow to that region and last could be histogram showing different cell types
+
+#3. Make a Map (option 1): Your colleague has found some ruins during a hike in the Blue Mountains and recorded the coordinates of structures on her phone (RCFeature2018.csv). She would like to map her points but has no computer or mapping skills. Can you make a map that she can work with using only a browser? She needs an interactive map that she can download to her computer and use straightaway. 
+
+#4. Create a standalone .html map in Leaflet showing at least basic topography and relief, and load in the table of points. Make sure she can see the FeatureID, FeatureType and Description attributes when she hovers over the point markers. 
+
+#5. Consider adding elements such as minimap() and measure() for easier map interaction
+
+#6. Explore differentiating the markers (e.g. by size using Accuracy field)
+
+#7. Explore the option of clustering markers with addMarkers(clusterOptions = markerClusterOptions()). Do you recommend marker clustering here?
+
+```{r, include=FALSE}
+  
+library(googlesheets4)
+library(leaflet)
+
+```
+
+```{r}
+#load data
+data <- read.csv("C:/Users/alexp/Documents/School/Spatial analytics/HW/cds-spatial/Week01/data/RCFeature2018.csv")
+
+#creates specific column for the labels so each point has all three attributes
+data$label <- paste0("FeatureID: ", data$FeatureID,"; ", 
+                      "FeatureType: ",data$FeatureType, "; ", 
+                      "Description: ",data$Description)
+
+#we make the map
+m <-leaflet(data) %>% addCircleMarkers(data = data, radius = data$Accuracy, label = data$label) %>% addTiles(data = data) %>% addMiniMap() %>% addMeasure() %>% addMarkers(clusterOptions = markerClusterOptions())
+
+m #load the map
+
+#radius affects the point size to be by Accuracy, label reads the data we input into the column label, add measure enables to measure distances on the map
+
+#I don't see the clustering option being necessary as it only makes the single points harder to see and my colleague would spend longer time finding the precise spot.
+
+```
+

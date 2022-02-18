@@ -1,2 +1,3 @@
-The rmdformats files work but they dont knit with results. I tried to make it ouput results as well but it seemed to just break so
-I made another version where you can also see my maps and results of the code. Please choose whichever you prefer or whichver you find easier to get through.
+The rmdformats files work but they don't knit with results. I tried to make it output results as well but it seemed to just break so I made another version where you
+can also see my maps and results of the code (the plain name without rmdformats in it). They are otherwise the same only in htmls one has results.
+Please choose whichever you prefer or whichever you find easier to get through.

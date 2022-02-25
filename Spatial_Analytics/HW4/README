@@ -1,0 +1,4 @@
+I couldnt knit the file due to line 308. While it runs in R, it just wont knit for some reason. 
+It's the code from original of the assignemnt so I don't really understand the problem.
+
+pal <- colorNumeric("viridis", isos$time, na.color = "transparent")

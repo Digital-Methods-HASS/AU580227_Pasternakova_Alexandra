@@ -2,3 +2,6 @@ I couldnt knit the file due to line 308. While it runs in R, it just wont knit f
 It's the code from original of the assignemnt so I don't really understand the problem.
 
 pal <- colorNumeric("viridis", isos$time, na.color = "transparent")
+
+Additionally my mapview doesn't work. The dataframe looks alright with spatial data and my newly added data but nothing shows up and I ran out of time
+to keep trying to fix it.

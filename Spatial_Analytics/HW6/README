@@ -1,0 +1,8 @@
+I have been trying to work on this for some time but for some reason I can't even load the IKONOS files 
+KazEastfused.tif
+I have been using brick, raster, stack etc but nothing works. Furthermore, I can't really figure out which data
+am I supposed to use for what as there is so many and some seem redundant? 
+So roses are marked as perrenial or cropland but then the researchers have been evading them so they are missing in the data????
+I have so many questions..
+
+Hopefully I manage to upload something if I can get my R to even read the file. 

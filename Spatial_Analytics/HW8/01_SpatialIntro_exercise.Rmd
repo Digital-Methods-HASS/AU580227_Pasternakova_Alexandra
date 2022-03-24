@@ -1,0 +1,177 @@
+---
+title: "Spatial Statistics - Introduction"
+author: "Alexandra Pasternakova"
+date: "11/12/2020 updated `r format(Sys.time(), '%B %d, %Y')`" 
+output:
+  rmdformats::readthedown:
+    highlight: kate
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Task 1: Simple spatial principles
+
+```{r point generation, eval = TRUE}
+n = 200
+
+xmin <- 0
+xmax <- 1
+ymin <- 0
+ymax <- 2
+
+x = runif(n, xmin, xmax)
+y = runif(n, ymin, ymax)
+
+```
+
+
+# Task 2: Plotting areas
+
+```{r rectangle, eval=TRUE}
+plot(x,y)
+
+ls.str()
+
+mapxy <- function(a = NA){
+  plot(x, y, asp = a)
+  rect(xmin, ymin, xmax, ymax)
+}
+
+mapxy(1:1)
+
+```
+
+# Task 3: Uniform pattern in a circle
+
+```{r circle, results = FALSE, message = FALSE, warning = FALSE, eval = TRUE}
+# Load the spatstat package
+library(spatstat)
+
+```
+
+```{r}
+
+# Create this many points, in a circle of this radius
+n_points <- 300
+radius <- 10
+
+# Generate uniform random numbers up to radius-squared using the objects above
+r_squared <- runif(n_points, 0, radius^2)
+angle <- runif(n_points, 0, 2*pi)
+
+# Take the square root of the values to get a uniform spatial distribution
+x <- sqrt(r_squared) * cos(angle)
+y <- sqrt(r_squared) * sin(angle)
+
+plot(disc(radius)); points(x, y)
+
+```
+
+# Task 4: Quadrat count test for randomness 
+
+* **Does the p-value let you reject the null hypothesis?**
+
+```{r quadrat, eval = TRUE, warning = FALSE}
+# Some variables have been pre-defined
+ls.str()
+x <-  runif(300, -10,10)
+y <-  runif(300, -10,10)
+radius <- 10
+
+summary(x)
+# Set coordinates and window
+ppxy <- ppp(x = x, y = y, window = disc(radius))
+
+# Test the point pattern
+qt <- quadrat.test(ppxy)
+
+# Inspect the results
+plot(qt)
+print(qt)
+
+```
+
+**p-value of above 0.05 means we cannot reject the null hypothesis (null hypothesis: points are not spatially random)**
+
+# Task 5: Creating a random point pattern with spatstat
+
+```{r ppoisson, eval=TRUE}
+# Create a disc of radius 10
+disc10 <- disc(radius)
+
+# Compute the rate as count divided by area
+lambda <- 500 / area.owin(disc10)
+
+# Create a point pattern object
+ppois <- rpoispp(lambda = lambda, win = disc10)
+
+# Plot the Poisson point pattern
+plot(ppois)
+
+npoints(ppois) #number of points generated
+```
+
+<br>
+
+# Task 6: Simulating clustered and inhibitory patterns
+
+```{r clustering,eval= TRUE, warning = FALSE}
+# Create a disc of radius 10
+disc10 <- disc(radius)
+
+# Generate clustered points from a Thomas process
+set.seed(123)
+p_cluster <- rThomas(kappa = 0.35, scale = 1, mu = 3, win = disc10)
+plot(p_cluster)
+
+# Run a quadrat test
+quadrat.test(p_cluster, alternative = "clustered") #p_value agrees it is clustered
+
+# Regular points from a Strauss process
+set.seed(123)
+p_regular <- rStrauss(beta = 2.9, gamma = 0.025, R = .5, W = disc10)
+plot(p_regular)
+
+# Run a quadrat test
+quadrat.test(p_regular, alternative = "regular") #p_value agrees it is regular, not clustered
+```
+
+<br>
+<br>
+<br>
+
+# Task 7: Point Pattern testing
+
+Two `ppp` objects have been created called `p1` and `p2` in your /data folder. Test if they are clustered or regular, and select the right answer. You'll need to run `quadrat.test` four times, once for each process with each hypothesis.
+
+```{r, include=FALSE, eval=TRUE}
+p1 <- readRDS("C:\\Users\\alexp\\Documents\\School\\Spatial_analytics\\HW\\HW3\\cds-spatial\\data\\p1.rds")
+p2 <- readRDS("C:\\Users\\alexp\\Documents\\School\\Spatial_analytics\\HW\\HW3\\cds-spatial\\data\\p2.rds")
+```
+
+```{r, eval=TRUE, warning = FALSE}
+quadrat.test(p1, alternative = "clustered") #p1 is clustered
+```
+
+```{r, eval=TRUE, warning = FALSE}
+quadrat.test(p1, alternative = "regular") # confirmed p1 is not regular
+```
+
+```{r, eval=TRUE, warning = FALSE}
+quadrat.test(p2, alternative = "clustered") #p2 is clustered
+```
+
+```{r, eval=TRUE, warning = FALSE}
+quadrat.test(p2, alternative = "regular") #confirmed p2 is not regular
+```
+
+### Possible Answers
+
+1. p1 is regular, p2 is regular
+2. p1 is regular, p2 is clustered 
+3. p1 is clustered, p2 is clustered
+4. p1 is clustered, p2 is regular
+
+**asnwer 3 is correct**

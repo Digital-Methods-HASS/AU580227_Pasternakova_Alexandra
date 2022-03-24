@@ -1,0 +1,158 @@
+---
+title: "Spatial statistics: Point Patterns exercises"
+author: "Alexandra Pasternakova"
+date: "11/12/2020 updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  rmdformats::readthedown:
+    highlight: kate
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Task 1: Nearest-neighbor distributions
+
+
+```{r create points, echo = TRUE, warning = FALSE, message=FALSE}
+library(spatstat)
+```
+```{r, eval = TRUE, echo = TRUE, warning = FALSE, results='hide'}
+disc10 <- disc(radius = 10)
+# p_poisson 
+# Compute the rate as count divided by area
+lambda <- 300/area.owin(disc10)
+# Create a point pattern object
+p_poisson <- rpoispp(lambda = lambda, win = disc10)
+# p_cluster and p_regular
+# Generate clustered points from a Thomas process
+set.seed(123)
+p_cluster <- rThomas(kappa = 0.35, scale = 1, mu = 3, win = disc10)
+# Regular points from a Strauss process
+set.seed(123)
+p_regular <- rStrauss(beta = 2.9, gamma = 0.025, R = .5, W = disc10)
+
+
+#plots
+attach(mtcars)
+par(mfrow=c(1,3))
+plot(p_poisson)
+plot(p_cluster)
+plot(p_regular)
+```
+
+
+```{r NNA exercise, eval= TRUE, warning=FALSE}
+# Point patterns are pre-defined
+p_poisson; p_regular
+
+# Calc nearest-neighbor distances for Poisson point data
+nnd_poisson <- nndist(p_poisson)
+
+# Draw a histogram of nearest-neighbor distances
+hist(nnd_poisson)
+
+# Estimate G(r)
+G_poisson <- Gest(p_poisson)
+
+# Plot G(r) vs. r
+plot(G_poisson)
+
+# Repeat for regular point data
+nnd_regular <- nndist(p_regular)
+hist(nnd_regular)
+G_regular <- Gest(p_regular)
+plot(G_regular)
+```
+
+
+# Task 2: Other point pattern distribution functions - multiscalar
+
+
+```{r K function, eval= TRUE, warning=FALSE}
+# Point patterns are pre-defined
+p_poisson; p_cluster; p_regular
+
+# Estimate the K-function for the Poisson points
+K_poisson <- Kest(p_poisson, correction = "border")
+
+# The default plot shows quadratic growth
+plot(K_poisson, . ~ r)
+
+# Subtract pi * r ^ 2 from the Y-axis and plot
+plot(K_poisson, . - pi * r ^ 2 ~ r)
+
+# Compute envelopes of K under random locations
+K_cluster_env <- envelope(p_cluster, Kest, correction = "border")
+
+# Insert the full formula to plot K minus pi * r^2
+plot(K_cluster_env, . - pi * r ^ 2 ~ r)
+
+# Repeat for regular data
+K_regular_env <- envelope(p_regular, Kest, correction = "border")
+
+plot(K_regular_env, . - pi * r ^ 2 ~ r)
+```
+
+
+# Task 3: Tree location pattern
+Load a `ppp` object called `redoak` which contains the locations of trees in a woodland. Plot the tree locations and then test the hypothesis that the points are clustered against a null hypothesis of a random uniform distribution.
+
+```{r, eval= TRUE, echo = FALSE}
+redoak <- readRDS("C:\\Users\\alexp\\Documents\\School\\Spatial_analytics\\HW\\HW3\\cds-spatial\\data\\redoak.rds")
+```
+
+## Possible Answers
+
+* I cannot reject the null hypothesis. 
+* I can reject the null hypothesis with p-value less than 0.1 
+* I can reject the null hypothesis with p-value less than 0.01
+
+### Hint: check out the measure from the first exercise 
+```{r Tree location pattern, eval= TRUE, warning=FALSE}
+plot(redoak)
+quadrat.test(redoak, alternative = "clustered")
+```
+
+**I can reject the null hypothesis with p-value less than 0.01** is correct
+
+# 3) Optional: Using the mounds dataset from the Kazanlak Valley in data folder, what is pattern in these mounds over a range of distances (use K function)?
+
+```{r Load data, eval = TRUE, echo = FALSE, warning = FALSE, message=FALSE, results='hide'}
+library(sf)
+library(maptools)
+mounds <- st_read("C:/Users/alexp/Documents/School/Spatial_analytics/HW/HW3/cds-spatial/data/KAZ_mounds.shp")
+```
+
+```{r Mounds, eval= TRUE, warning=FALSE}
+plot(st_geometry(mounds))
+
+# convert to (point pattern) object - the study window seems to be in the dataframe already so I do not have to specify it
+pp1 <- as.ppp( mounds)
+plot(pp1)
+
+# Estimate the K-function for the mound points
+K_mounds <- Kest(pp1, correction = "border")
+
+# default plot
+plot(K_mounds, . ~ r)
+
+# Subtract pi * r ^ 2 from the Y-axis and plot
+plot(K_mounds, . - pi * r ^ 2 ~ r)
+
+# Compute envelopes of K under random locations
+K_Mounds_env <- envelope(pp1, Kest, correction = "border")
+
+# Insert the full formula to plot K minus pi * r^2
+plot(K_Mounds_env, . - pi * r ^ 2 ~ r)
+
+```
+
+**K values greater than K-expected indicate clustering of points at a given distance band**
+
+```{r}
+quadrat.test(pp1, alternative = "clustered")
+```
+
+**p-value < 2.2e-16 would confirm our findings, that the mounds are very clustered!!**
